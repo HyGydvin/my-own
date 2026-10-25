@@ -10,7 +10,7 @@ import ru.valera.my_own.service.UserService;
 
 import java.util.List;
 
-@RequiredArgsConstructorgit
+@RequiredArgsConstructor
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
