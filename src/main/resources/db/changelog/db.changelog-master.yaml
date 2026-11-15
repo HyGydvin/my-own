@@ -105,3 +105,24 @@ databaseChangeLog:
             referencedTableName: users
             referencedColumnNames: id
             constraintName: fk6s1ob9k4ihi75xbxe2w0ylsdh
+
+  - changeSet:
+      id: 004-add-created-at-to-tasks
+      author: developer
+      changes:
+        - addColumn:
+            tableName: tasks
+            columns:
+              - column:
+                  name: created_at
+                  type: timestamp
+                  defaultValueComputed: now()
+        - sql:
+            sql: >
+              UPDATE tasks
+              SET created_at = now()
+              WHERE created_at IS NULL;
+        - addNotNullConstraint:
+            tableName: tasks
+            columnName: created_at
+            columnDataType: timestamp

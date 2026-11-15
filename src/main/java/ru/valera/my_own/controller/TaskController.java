@@ -2,8 +2,11 @@ package ru.valera.my_own.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import ru.valera.my_own.dto.TaskFilter;
 import ru.valera.my_own.dto.TaskRequest;
 import ru.valera.my_own.dto.TaskResponse;
 import ru.valera.my_own.enums.TaskStatus;
@@ -36,6 +39,11 @@ public class TaskController {
     @GetMapping("/status/{status}")
     public List<TaskResponse> getTasksByStatus(@PathVariable TaskStatus status){
         return taskService.getTasksByStatus(status);
+    }
+
+    @GetMapping("/filter")
+    public PagedModel<TaskResponse> getTasksByFilter(TaskFilter filter, Pageable pageable){
+        return new PagedModel<>(taskService.getTasksByFilter(filter, pageable));
     }
 
     @GetMapping
