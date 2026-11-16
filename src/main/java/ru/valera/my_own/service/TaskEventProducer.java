@@ -1,12 +1,14 @@
+
 package ru.valera.my_own.service;
 
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
 import ru.valera.my_own.event.TaskCreatedEvent;
 
-@Slf4j
+import java.util.concurrent.CompletableFuture;
+
 @RequiredArgsConstructor
 @Component
 public class TaskEventProducer {
@@ -15,24 +17,13 @@ public class TaskEventProducer {
 
     private final KafkaTemplate<String, TaskCreatedEvent> kafkaTemplate;
 
-    public void sendTaskCreatedEvent(TaskCreatedEvent event){
-        kafkaTemplate.send(TOPIC, event.taskId().toString(), event)
-                .whenComplete((result, exception) -> {
-                    if (exception != null){
-                        log.error(
-                                "Failed to send task-created event: taskId={}",
-                                event.taskId(),
-                                exception
-                        );
-                    } else {
-                        log.info(
-                                "Task-created event sent: taskId={}, partition={}",
-                                event.taskId(),
-                                result.getRecordMetadata().topic(),
-                                result.getRecordMetadata().partition()
-                        );
-                    }
-                });
+    public CompletableFuture<SendResult<String, TaskCreatedEvent>> sendTaskCreatedEvent(
+            TaskCreatedEvent event
+    ) {
+        return kafkaTemplate.send(
+                TOPIC,
+                event.taskId().toString(),
+                event
+        );
     }
-
 }

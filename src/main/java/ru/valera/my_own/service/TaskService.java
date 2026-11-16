@@ -12,14 +12,14 @@ import org.springframework.transaction.annotation.Transactional;
 import ru.valera.my_own.dto.TaskFilter;
 import ru.valera.my_own.dto.TaskRequest;
 import ru.valera.my_own.dto.TaskResponse;
-import ru.valera.my_own.entity.Category;
-import ru.valera.my_own.entity.Task;
-import ru.valera.my_own.entity.User;
+import ru.valera.my_own.entity.OutboxEvent;
 import ru.valera.my_own.enums.TaskStatus;
 import ru.valera.my_own.event.TaskCreatedEvent;
 import ru.valera.my_own.exception.TaskNotFoundException;
 import ru.valera.my_own.mapper.TaskMapper;
+import ru.valera.my_own.repository.OutboxEventRepository;
 import ru.valera.my_own.repository.TaskRepository;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
@@ -32,7 +32,8 @@ public class TaskService {
     private final UserService userService;
     private final CategoryService categoryService;
     private final TaskMapper taskMapper;
-    private final TaskEventProducer taskEventProducer;
+    private final OutboxEventRepository outboxEventRepository;
+    private final ObjectMapper objectMapper;
 
     @Transactional
     public TaskResponse create(TaskRequest request) {
@@ -45,13 +46,17 @@ public class TaskService {
         var task = taskMapper.toEntity(request, category, user);
         var savedTask = taskRepository.save(task);
 
-        taskEventProducer.sendTaskCreatedEvent(
-                new TaskCreatedEvent(
-                        savedTask.getId(),
-                        savedTask.getTitle(),
-                        savedTask.getUser().getId()
-                )
+        var event = new TaskCreatedEvent(
+                savedTask.getId(),
+                savedTask.getTitle(),
+                savedTask.getUser().getId()
         );
+
+        var outboxEvent = new OutboxEvent();
+        outboxEvent.setEventType("TASK_CREATED");
+        outboxEvent.setPayload(objectMapper.writeValueAsString(event));
+
+        outboxEventRepository.save(outboxEvent);
 
         log.info("Task created successfully: taskId={}", savedTask.getId());
 
